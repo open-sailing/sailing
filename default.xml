@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+
+  <remote  name="open-sailing"
+           fetch="https://github.com/open-sailing/" />
+
+  <default revision="master"
+           remote="open-sailing"
+           sync-j="1" />
+
+  <!-- tools -->
+  <project name="tools"  />
+ 
+  <!--apps -->
+  <project name="apps" />
+ 
+  <!-- uefi -->
+  <project name="uefi" />
+ 
+  <!-- sailing -->
+  <project name="sailing" />
+  
+  <!-- kernel -->
+  <project name="kernel" revision="refs/tags/v3.0b3"/>
+
+</manifest>
