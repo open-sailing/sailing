@@ -20,8 +20,9 @@ DISTRO_CENTOS=linux/CentOS/CentOS-7-ARM64-V00.tar.gz
 CORE_NUM=`cat /proc/cpuinfo | grep "processor" | wc -l`
 TOOLCHAIN=gcc-linaro-aarch64-linux-gnu-4.9-2014.09_linux.tar.xz
 DOWNLOAD_FTP_ADDR=http://open-estuary.org/download/AllDownloads/FolderNotVisibleOnWebsite/EstuaryInternalConfig
-CHINA_INTERAL_FTP_ADDR=`ftp://117.78.41.188/FolderNotVisibleOnWebsite/EstuaryInternalConfig`
-BINARIES=(CH02TEVBC_V03.bin:firmware/CH02TEVBC_V03.bin hisi-idt.py:firmware/hisi-idt-001.py nvme.img:firmware/nvme-001.img mini-rootfs.cpio.gz:linux/Mini/Mini-1.1-ARM64-V02.cpio.gz deploy-utils.tar.bz2:utils/deploy-utils-v02.tar.bz2 grub.cfg:examples/grub-005.cfg)
+CHINA_INTERAL_FTP_ADDR=ftp://117.78.41.188/FolderNotVisibleOnWebsite/EstuaryInternalConfig
+BINARIES=(mini-rootfs.cpio.gz:linux/Mini/Mini-1.1-ARM64-V02.cpio.gz deploy-utils.tar.bz2:utils/deploy-utils-v02.tar.bz2 grub.cfg:examples/grub-005.cfg)
+DOWNLOAD_GRUBEFI=ftp://117.78.41.188/releases/2.3/linux/Common/grubaa64.efi
 
 ###################################################################################
 # Const Variables, PATH
@@ -80,7 +81,6 @@ check_sum()
 	checksum_source=$2
 	checksum_dir=$(cd `dirname $checksum_source` ; pwd)
 	checksum_file=`basename $checksum_source`
-
 	pushd $target_dir >/dev/null
 	if [ -f .$checksum_file ]; then
 		if diff .$checksum_file $checksum_file >/dev/null 2>&1; then
@@ -92,7 +92,6 @@ check_sum()
 	if ! md5sum --quiet --check $checksum_dir/$checksum_file >/dev/null 2>&1; then
 		return 1
 	fi
-
 	cp $checksum_file .$checksum_file
 
 	popd >/dev/null
@@ -148,7 +147,7 @@ install_toolchains()
 	fi
 
 	if [ ! -d toolchain/$toolchain_dir ]; then
-		if ! tar xvf $toolchain_file -C ./ >/dev/null 2>&1; then
+		if ! sudo tar xvf $TOOLCHAIN -C ./ >/dev/null 2>&1; then
 			rm -rf toolchain/$toolchain_dir 2>/dev/null ; return 1
 			return 1
 		fi
@@ -158,7 +157,7 @@ install_toolchains()
 
 	TOOLCHAIN_DIR=`cd toolchain/$toolchain_dir; pwd`
 	export PATH=$TOOLCHAIN_DIR/bin:$PATH	
-	
+
 	#install toolchain
 	if [ ! -d /opt/$toolchain_dir ]; then
 		if ! sudo cp -r toolchain/$toolchain_dir/ /opt/; then
@@ -170,23 +169,24 @@ install_toolchains()
 			echo "$str">> ~/.bashrc
 		fi
 	fi	
-	
+
 	return 0
 }
 
 ###################################################################################
-# Install distros (default distros: CentOS)
+# Priority install distros (default distros: CentOS)
 ###################################################################################
-install_distro()
+prior_install_distro()
 {
 	distro_link=CentOS_ARM64.tar.gz
-	distro_file=${DISTROS_CENTO##*/}
+	distro_file=${DISTRO_CENTOS##*/}
 	ftp_file=linux/CentOS/CentOS-7-ARM64-V00.tar.gz
 	distro=CentOS
 	echo "##############################################################################"
 	echo "# Install distros (default distros: CentOS)"
 	echo "##############################################################################"
 	mkdir -p distro
+	pushd distro >/dev/null
 	if [ ! -f ${distro_file}.sum ]; then
 		wget -c $DOWNLOAD_FTP_ADDR/${DISTRO_CENTOS}.sum || return 1
 	fi
@@ -202,13 +202,16 @@ install_distro()
 		ln -s $distro_file  $distro_link
 		ln -s ${distro_file}.sum ${distro_link}.sum
 	fi
+	popd >/dev/null
+
 	echo ""	
 	echo "##############################################################################"
 	echo "# Uncompress distros (distros: $DISTROS)"
 	echo "##############################################################################"
 
 	mkdir -p $OUTPUT_DIR/distro/$distro
-	if  sudo tar xvf distro/$distro_link -C $OUTPUT_DIR/distro/$distro >/dev/null 2>&1; then
+
+	if ! sudo tar xvf distro/$distro_link -C $OUTPUT_DIR/distro/$distro >/dev/null 2>&1; then
 		sudo rm -rf $OUTPUT_DIR/distro/$distro
 		return 1
 	fi
@@ -217,6 +220,66 @@ install_distro()
 	sudo rm -rf $OUTPUT_DIR/distro/$distro/lib/modules/*
 
 	echo ""
+}
+
+###################################################################################
+# create_distros
+###################################################################################
+create_distros()
+{
+	echo "---------------------------------------------------------------"
+	echo "- Create distros (distros: $DISTROS, distro dir: $OUTPUT_DIR/distro)"
+	echo "---------------------------------------------------------------"
+	if [ -f $OUTPUT_DIR/distro/${DISTROS}_ARM64.tar.gz ]; then
+		return 0
+	fi
+
+	if [ ! -d $OUTPUT_DIR/distro/$DISTROS ]; then
+		echo "Error! $OUTPUT_DIR/distro/$DISTROS is not exist!" >&2 ; return 1
+	fi
+
+	pushd $OUTPUT_DIR/distro/$DISTROS  >/dev/null
+	if ! (sudo tar czvf ../${DISTROS}_ARM64.tar.gz *); then
+		echo "Error! Create ${DISTROS}_ARM64.tar.gz failed!" >&2
+		return 1
+	fi
+	popd >/dev/null
+	echo "- Create distros done!"
+	echo ""
+}
+
+###################################################################################
+# Create distros softlink
+###################################################################################
+create_distros_softlink()
+{
+
+	echo "---------------------------------------------------------------"
+	echo "- Create distros softlink (distros: $DISTROS)"
+	echo "---------------------------------------------------------------"
+
+	pushd $OUTPUT_DIR/binary/arm64 >/dev/null
+
+	rm -f ${DISTROS}_ARM64.tar.gz 2>/dev/null
+	ln -s ../../distro/${DISTROS}_ARM64.tar.gz
+
+	popd >/dev/null
+	echo "- Create distros softlink done!"
+	echo ""
+}
+
+###################################################################################
+# Later install distros (default distros: CentOS)
+###################################################################################
+late_install_distro()
+{
+	if ! create_distros; then
+		echo -e "\033[31mError! Create distro failed!\033[0m" ; exit 1
+	fi
+
+	if ! create_distros_softlink; then
+		echo -e "\033[31mError! Create distro softlink failed!\033[0m" ; exit 1
+	fi
 }
 
 ###################################################################################
@@ -244,19 +307,38 @@ install_binaries()
 			wget -c $DOWNLOAD_FTP_ADDR/$target_addr || return 1
 			check_sum . ${binary_file}.sum || return 1
 		fi
-		
+
 		if [ x"$target_file" != x"$binary_file" ]; then
 			rm -f $target_file 2>/dev/null
 			ln -s $binary_file $target_file
 		fi
 	done
 
-	popd >/dev/null
 	if [[ $? != 0 ]]; then
 		echo -e "\033[31mError! Download binaries failed!\033[0m" ; exit 1
 	fi
 
-	echo ""
+	grubefi=${DOWNLOAD_GRUBEFI##*/}
+
+	if [ ! -f ${DOWNLOAD_GRUBEFI}.sum ]; then
+		rm -f .${DOWNLOAD_GRUBEFI}.sum 2>/dev/null
+		wget -c $DOWNLOAD_GRUBEFI.sum || return 1
+	fi
+
+	if [ ! -f $DOWNLOAD_GRUBEFI ] || ! check_sum . ${DOWNLOAD_GRUBEFI}.sum; then
+		rm -f $DOWNLOAD_GRUBEFI 2>/dev/null
+		wget -c $DOWNLOAD_GRUBEFI || return 1
+		check_sum . ${DOWNLOAD_GRUBEFI}.sum || return 1
+	fi
+
+	popd >/dev/null
+
+	mkdir -p $OUTPUT_DIR/binary/arm64/ 2>/dev/null
+	cp -f prebuild/mini-rootfs.cpio.gz $OUTPUT_DIR/binary/arm64 || return 1 echo ""
+	cp -f prebuild/deploy-utils.tar.bz2 $OUTPUT_DIR/binary/arm64 || return 1
+	cp -f prebuild/grubaa64.efi $OUTPUT_DIR/binary/arm64 || return 1
+	cp -f prebuild/grub.cfg $OUTPUT_DIR/binary/arm64 || return 1
+
 }
 
 ###################################################################################
@@ -282,7 +364,6 @@ build_kernel()
 	make PATH=$PATH ARCH=$ARCH CROSS_COMPILE=$cross_compile O=$kernel_dir -j${core_num} firmware_install INSTALL_FW_PATH=$rootfs/lib/firmware
 	popd >/dev/null
 
-	mkdir -p $OUTPUT_DIR/binary/arm64/ 2>/dev/null
 	cp $kernel_bin $OUTPUT_DIR/binary/arm64/
 	cp $kernel_dir/vmlinux $OUTPUT_DIR/binary/arm64/
 	cp $kernel_dir/System.map $OUTPUT_DIR/binary/arm64/
@@ -358,11 +439,19 @@ fi
 if ! install_binaries; then
 	echo -e "\033[31mError! Install binaries failed!\033[0m" ; exit 1
 fi
+
+if ! prior_install_distro; then
+	echo -e "\033[31mError! Install distro failed!\033[0m" ; exit 1
+fi
 ###################################################################################
 # Build Kernel Environment
 ###################################################################################
 if ! build_kernel; then
 	echo -e "\033[31mError! Build kernel failed!\033[0m" ; exit 1
+fi
+
+if ! late_install_distro; then
+	echo -e "\033[31mError! Late install distro failed!\033[0m" ; exit 1
 fi
 ###################################################################################
 # Quick Deploy

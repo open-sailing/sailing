@@ -4,7 +4,6 @@
 # mkisoimg.sh --platforms=D02,D03 --distros=Ubuntu,OpenSuse --capacity=50,50 --bindir=./workspace
 ###################################################################################
 TOPDIR=$(cd `dirname $0` ; pwd)
-read -p "mkisoimg.sh ---TOPDIR: $TOPDIR ---------"
 ###################################################################################
 # Global variable
 ###################################################################################
@@ -63,10 +62,7 @@ do
 		--platforms) PLATFORMS=$ac_optarg ;;
 		--distros) DISTROS=$ac_optarg ;;
 		--capacity) CAPACITY=$ac_optarg ;;
-		--bindir) BINARY_DIR=$(cd $ac_optarg ; pwd)
-		echo mkisoimg.sh 1------pwd `pwd` ------       
-		echo mkisoimg.sh 2------optarg $ac_optarg ------
-		;;
+		--bindir) BINARY_DIR=$(cd $ac_optarg ; pwd);;
 		--disklabel) DISK_LABEL=$ac_optarg ;;
 		*) echo "Unknow option $ac_option!" ; Usage ; exit 1 ;;
 	esac
