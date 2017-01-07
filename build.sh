@@ -16,13 +16,10 @@ DISTROS=CentOS
 OUTPUT_DIR=workspace
 CROSS_COMPILE=aarch64-linux-gnu-
 ESTUARY_TE_CONFIG=estuary_te_defconfig
-DISTRO_CENTOS=linux/CentOS/CentOS-7-ARM64-V00.tar.gz
 CORE_NUM=`cat /proc/cpuinfo | grep "processor" | wc -l`
-TOOLCHAIN=gcc-linaro-aarch64-linux-gnu-4.9-2014.09_linux.tar.xz
 DOWNLOAD_FTP_ADDR=http://open-estuary.org/download/AllDownloads/FolderNotVisibleOnWebsite/EstuaryInternalConfig
 CHINA_INTERAL_FTP_ADDR=ftp://117.78.41.188/FolderNotVisibleOnWebsite/EstuaryInternalConfig
-BINARIES=(mini-rootfs.cpio.gz:linux/Mini/Mini-1.1-ARM64-V02.cpio.gz deploy-utils.tar.bz2:utils/deploy-utils-v02.tar.bz2 grub.cfg:examples/grub-005.cfg)
-DOWNLOAD_GRUBEFI=ftp://117.78.41.188/releases/2.3/linux/Common/grubaa64.efi
+SAILING_CFGFILE=sailing-config.xml
 
 ###################################################################################
 # Const Variables, PATH
@@ -69,6 +66,19 @@ Example:
 	
 	
 EOF
+}
+
+###################################################################################
+# string[] get_field_content <xml_file> <field>
+###################################################################################
+get_field_content()
+{
+	local xml_file=$1
+	local field=$2
+	local xml_content=(`sed -n "/<$field>/,/<\/$field>/p" $xml_file 2>/dev/null | sed -e '/^$/d' | sed 's/ //g'`)
+	unset xml_content[0]
+	unset xml_content[${#xml_content[@]}]
+	echo ${xml_content[*]}
 }
 
 ###################################################################################
@@ -126,8 +136,10 @@ install_dev_tools()
 
 install_toolchains()
 {
-	postfix=$(echo $TOOLCHAIN | grep -Po "((\.tar)*\.(tar|bz2|gz|xz)$)" 2>/dev/null)
-	toolchain_dir=${TOOLCHAIN%$postfix}	
+	toolchain_content=`get_field_content ./sailing/$SAILING_CFGFILE toolchain`
+	toolchain=`expr "X$toolchain_content" : 'X\([^:]*\):.*' | sed 's/ //g'`
+	postfix=$(echo $toolchain | grep -Po "((\.tar)*\.(tar|bz2|gz|xz)$)" 2>/dev/null)
+	toolchain_dir=${toolchain%$postfix}
 	mkdir -p toolchain
 	pushd toolchain >/dev/null
 	
@@ -135,19 +147,19 @@ install_toolchains()
 	echo "# Download & Uncompress toolchain"
 	echo "##############################################################################"
 
-	if [ ! -f ${TOOLCHAIN}.sum ]; then
-		rm -f .${TOOLCHAIN}.sum 2>/dev/null
-		wget -c $DOWNLOAD_FTP_ADDR/toolchain/${TOOLCHAIN}.sum || return 1
+	if [ ! -f ${toolchain}.sum ]; then
+		rm -f .${toolchain}.sum 2>/dev/null
+		wget -c $DOWNLOAD_FTP_ADDR/toolchain/${toolchain}.sum || return 1
 	fi
 
-	if [ ! -f $TOOLCHAIN ] || ! check_sum . ${TOOLCHAIN}.sum; then
-		rm -f $TOOLCHAIN 2>/dev/null
-		wget -c $DOWNLOAD_FTP_ADDR/toolchain/${TOOLCHAIN} || return 1
-		check_sum . ${TOOLCHAIN}.sum || return 1
+	if [ ! -f $toolchain ] || ! check_sum . ${toolchain}.sum; then
+		rm -f $toolchain 2>/dev/null
+		wget -c $DOWNLOAD_FTP_ADDR/toolchain/${toolchain} || return 1
+		check_sum . ${toolchain}.sum || return 1
 	fi
 
 	if [ ! -d toolchain/$toolchain_dir ]; then
-		if ! sudo tar xvf $TOOLCHAIN -C ./ >/dev/null 2>&1; then
+		if ! sudo tar xvf $toolchain -C ./ >/dev/null 2>&1; then
 			rm -rf toolchain/$toolchain_dir 2>/dev/null ; return 1
 			return 1
 		fi
@@ -174,13 +186,77 @@ install_toolchains()
 }
 
 ###################################################################################
+# Install binaries
+###################################################################################
+install_binaries()
+{
+	echo "##############################################################################"
+	echo "# Download binaries"
+	echo "##############################################################################"
+	mkdir -p prebuild
+	pushd prebuild >/dev/null
+	binaries=(`get_field_content ../sailing/$SAILING_CFGFILE prebuild`)
+	for binary in ${binaries[*]}; do
+		target_file=`expr "X$binary" : 'X\([^:]*\):.*' | sed 's/ //g'`
+		target_addr=`expr "X$binary" : 'X[^:]*:\(.*\)' | sed 's/ //g'`
+		binary_file=`basename $target_addr`
+		if [ ! -f ${binary_file}.sum ]; then
+			rm -f .${binary_file}.sum 2>/dev/null
+			wget -c $DOWNLOAD_FTP_ADDR/${target_addr}.sum || return 1
+		fi
+
+		if [ ! -f $binary_file ] || ! check_sum . ${binary_file}.sum; then
+			rm -f $binary_file 2>/dev/null
+			wget -c $DOWNLOAD_FTP_ADDR/$target_addr || return 1
+			check_sum . ${binary_file}.sum || return 1
+		fi
+
+		if [ x"$target_file" != x"$binary_file" ]; then
+			rm -f $target_file 2>/dev/null
+			ln -s $binary_file $target_file
+		fi
+	done
+
+	if [[ $? != 0 ]]; then
+		echo -e "\033[31mError! Download binaries failed!\033[0m" ; exit 1
+	fi
+
+	download_uefi=(`sed -n "/<uefi>/,/<\/uefi>/p"  ../sailing/$SAILING_CFGFILE 2>/dev/null | sed -e '/^$/d' | sed 's/ //g'`)
+	unset download_uefi[0]
+	unset download_uefi[${#download_uefi[@]}]
+	download_grubefi=${download_uefi[*]}
+	grubefi=${download_grubefi##*/}
+
+	if [ ! -f ${grubefi}.sum ]; then
+		rm -f .${grubefi}.sum 2>/dev/null
+		wget -c ${download_grubefi}.sum || return 1
+	fi
+
+	if [ ! -f $grubefi ] || ! check_sum . ${grubefi}.sum; then
+		rm -f $grubefi 2>/dev/null
+		wget -c $download_grubefi || return 1
+		check_sum . ${grubefi}.sum || return 1
+	fi
+
+	popd >/dev/null
+
+	mkdir -p $OUTPUT_DIR/binary/arm64/ 2>/dev/null
+	cp -f prebuild/mini-rootfs.cpio.gz $OUTPUT_DIR/binary/arm64 || return 1 echo ""
+	cp -f prebuild/deploy-utils.tar.bz2 $OUTPUT_DIR/binary/arm64 || return 1
+	cp -f prebuild/grubaa64.efi $OUTPUT_DIR/binary/arm64 || return 1
+	cp -f prebuild/grub.cfg $OUTPUT_DIR/binary/arm64 || return 1
+
+}
+
+###################################################################################
 # Priority install distros (default distros: CentOS)
 ###################################################################################
 prior_install_distro()
 {
+	distro_files=`get_field_content ./sailing/$SAILING_CFGFILE distro`
+	ftp_file=`echo $distro_files | tr ' ' '\n' | grep -Po "(?<=${distro}_ARM64.tar.gz:)(.*)"`
 	distro_link=CentOS_ARM64.tar.gz
-	distro_file=${DISTRO_CENTOS##*/}
-	ftp_file=linux/CentOS/CentOS-7-ARM64-V00.tar.gz
+	distro_file=${ftp_file##*/}
 	distro=CentOS
 	echo "##############################################################################"
 	echo "# Install distros (default distros: CentOS)"
@@ -188,12 +264,12 @@ prior_install_distro()
 	mkdir -p distro
 	pushd distro >/dev/null
 	if [ ! -f ${distro_file}.sum ]; then
-		wget -c $DOWNLOAD_FTP_ADDR/${DISTRO_CENTOS}.sum || return 1
+		wget -c $DOWNLOAD_FTP_ADDR/${ftp_file}.sum || return 1
 	fi
 
 	if [ ! -f $distro_file ] || ! check_sum . ${distro_file}.sum; then
 		rm -f $distro_file 2>/dev/null
-		wget -c $DOWNLOAD_FTP_ADDR/$DISTRO_CENTOS || return 1
+		wget -c $DOWNLOAD_FTP_ADDR/$ftp_file || return 1
 		check_sum . ${distro_file}.sum || return 1
 	fi
 
@@ -280,65 +356,6 @@ late_install_distro()
 	if ! create_distros_softlink; then
 		echo -e "\033[31mError! Create distro softlink failed!\033[0m" ; exit 1
 	fi
-}
-
-###################################################################################
-# Install binaries
-###################################################################################
-install_binaries()
-{
-	echo "##############################################################################"
-	echo "# Download binaries"
-	echo "##############################################################################"
-	mkdir -p prebuild
-	pushd prebuild >/dev/null
-
-	for binary in ${BINARIES[*]}; do
-		target_file=`expr "X$binary" : 'X\([^:]*\):.*' | sed 's/ //g'`
-		target_addr=`expr "X$binary" : 'X[^:]*:\(.*\)' | sed 's/ //g'`
-		binary_file=`basename $target_addr`
-		if [ ! -f ${binary_file}.sum ]; then
-			rm -f .${binary_file}.sum 2>/dev/null
-			wget -c $DOWNLOAD_FTP_ADDR/${target_addr}.sum || return 1
-		fi
-
-		if [ ! -f $binary_file ] || ! check_sum . ${binary_file}.sum; then
-			rm -f $binary_file 2>/dev/null
-			wget -c $DOWNLOAD_FTP_ADDR/$target_addr || return 1
-			check_sum . ${binary_file}.sum || return 1
-		fi
-
-		if [ x"$target_file" != x"$binary_file" ]; then
-			rm -f $target_file 2>/dev/null
-			ln -s $binary_file $target_file
-		fi
-	done
-
-	if [[ $? != 0 ]]; then
-		echo -e "\033[31mError! Download binaries failed!\033[0m" ; exit 1
-	fi
-
-	grubefi=${DOWNLOAD_GRUBEFI##*/}
-
-	if [ ! -f ${DOWNLOAD_GRUBEFI}.sum ]; then
-		rm -f .${DOWNLOAD_GRUBEFI}.sum 2>/dev/null
-		wget -c $DOWNLOAD_GRUBEFI.sum || return 1
-	fi
-
-	if [ ! -f $DOWNLOAD_GRUBEFI ] || ! check_sum . ${DOWNLOAD_GRUBEFI}.sum; then
-		rm -f $DOWNLOAD_GRUBEFI 2>/dev/null
-		wget -c $DOWNLOAD_GRUBEFI || return 1
-		check_sum . ${DOWNLOAD_GRUBEFI}.sum || return 1
-	fi
-
-	popd >/dev/null
-
-	mkdir -p $OUTPUT_DIR/binary/arm64/ 2>/dev/null
-	cp -f prebuild/mini-rootfs.cpio.gz $OUTPUT_DIR/binary/arm64 || return 1 echo ""
-	cp -f prebuild/deploy-utils.tar.bz2 $OUTPUT_DIR/binary/arm64 || return 1
-	cp -f prebuild/grubaa64.efi $OUTPUT_DIR/binary/arm64 || return 1
-	cp -f prebuild/grub.cfg $OUTPUT_DIR/binary/arm64 || return 1
-
 }
 
 ###################################################################################

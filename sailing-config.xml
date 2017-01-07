@@ -1,0 +1,19 @@
+<estuary>
+<toolchain>
+gcc-linaro-aarch64-linux-gnu-4.9-2014.09_linux.tar.xz: toolchain/gcc-linaro-aarch64-linux-gnu-4.9-2014.09_linux.tar.xz
+</toolchain>
+
+<distro>
+CentOS_ARM64.tar.gz: linux/CentOS/CentOS-7.2.1606-ARM64-V02.tar.gz
+</distro>
+
+<uefi>
+ftp://117.78.41.188/releases/2.3/linux/Common/grubaa64.efi
+</uefi>
+
+<prebuild>
+mini-rootfs.cpio.gz: linux/Mini/Mini-1.1-ARM64-V02.cpio.gz
+deploy-utils.tar.bz2: utils/deploy-utils-v04.tar.bz2
+grub.cfg: examples/grub-007.cfg
+</prebuild>
+</estuary>
