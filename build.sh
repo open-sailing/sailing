@@ -18,6 +18,7 @@ OUTPUT_DIR=workspace
 CROSS_COMPILE=aarch64-linux-gnu-
 ESTUARY_TE_CONFIG=estuary_te_defconfig
 CORE_NUM=`cat /proc/cpuinfo | grep "processor" | wc -l`
+DOWNLOAD_ESTUARY=https://github.com/open-estuary/estuary.git
 DOWNLOAD_FTP_ADDR=http://open-estuary.org/download/AllDownloads/FolderNotVisibleOnWebsite/EstuaryInternalConfig
 CHINA_INTERAL_FTP_ADDR=ftp://117.78.41.188/FolderNotVisibleOnWebsite/EstuaryInternalConfig
 SAILING_CFGFILE=sailing-config.xml
@@ -402,14 +403,14 @@ quick_deploy()
 	bin_dir=$OUTPUT_DIR/binary/arm64
 	
 	if [ x"$deploy_type" = x"usb" ]; then
-		sailing/deploy/mkusbinstall.sh --target=$deploy_device --platforms=$PLATFORMS --distros=$DISTROS --capacity=$CAPACITY --bindir=$bin_dir || exit 1
+		$estuary_script_path/mkusbinstall.sh --target=$deploy_device --platforms=$PLATFORMS --distros=$DISTROS --capacity=$CAPACITY --bindir=$bin_dir || exit 1
 	elif [ x"$deploy_type" = x"iso" ]; then
 	if [ ! -f $bin_dir/Estuary.iso ]; then
-		sailing/deploy/mkisoimg.sh --platforms=$PLATFORMS --distros=$DISTROS --capacity=$CAPACITY --disklabel="Estuary-TE" --bindir=$bin_dir || exit 1
+		$estuary_script_path/mkisoimg.sh --platforms=$PLATFORMS --distros=$DISTROS --capacity=$CAPACITY --disklabel="Estuary-TE" --bindir=$bin_dir || exit 1
 		mv Estuary-TE.iso $bin_dir/ || exit 1
 	fi
 	elif [ x"$deploy_type" = x"pxe" ]; then
-		sailing/deploy/mkpxe.sh --platforms=$PLATFORMS --distros=$DISTROS --capacity=$CAPACITY --boardmac=$BOARDS_MAC --bindir=$bin_dir || exit 1
+		$estuary_script_path/mkpxe.sh --platforms=$PLATFORMS --distros=$DISTROS --capacity=$CAPACITY --boardmac=$BOARDS_MAC --bindir=$bin_dir || exit 1
 	else
 		echo "Unknow deploy type!" >&2 ; exit 1
 	fi	
@@ -444,8 +445,26 @@ do
         shift
 done
 ###################################################################################
+# fork estuary script for multiplex
+###################################################################################
+clone_estuary()
+{
+	if [ ! -d estuary ]; then
+		rm -rf estuary 2>/dev/null
+		git clone $DOWNLOAD_ESTUARY || return 1
+	fi
+
+	estuary_script_path=$(cd estuary/deploy; pwd)
+}
+
+###################################################################################
 # Install Sailing Project  Environment
 ###################################################################################
+
+if ! clone_estuary; then
+	echo -e "\033[31mError! Fork estuary multiplex script failed!\033[0m" ; exit 1
+fi
+
 if ! install_dev_tools; then
 	echo -e "\033[31mError! Install development tools failed!\033[0m" ; exit 1
 fi

@@ -9,18 +9,18 @@
            sync-j="1" />
 
   <!-- tools -->
-  <project name="tools"  />
+  <project name="tools" revision="refs/tags/v1.0.0" />
  
   <!--apps -->
-  <project name="apps" />
+  <project name="apps" revision="refs/tags/v1.0.0" />
  
   <!-- uefi -->
-  <project name="uefi" />
+  <project name="uefi" revision="refs/tags/v1.0.0" />
  
   <!-- sailing -->
-  <project name="sailing" />
+  <project name="sailing" revision="refs/tags/v1.0.3" />
   
   <!-- kernel -->
-  <project name="kernel" revision="refs/tags/v3.0b3"/>
+  <project name="kernel" revision="refs/tags/v3.0-rc0"/>
 
 </manifest>
