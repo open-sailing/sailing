@@ -53,22 +53,19 @@ cat << EOF
 Usage: ./sailing/build.sh [options]
 Options:
 	-h, --help: Display this information
-	-v, --version: print estuary version
 Options:
 	--builddir: Build output directory, default is workspace
-	--mac: target board mac address, --mac must be specified if deploy type is pxe
-
 	-a: download address, China or Estuary(default Estuary)	
 	
 Example:
 	./sailing/build.sh --help
+	./sailing/build.sh --builddir=./workspace --deploy=iso -a Estuary
+	./sailing/build.sh --builddir=./workspace --deploy=iso -a China
 	./sailing/build.sh --builddir=./workspace \\
 		--deploy=pxe --mac=01-00-18-82-05-00-7f,01-00-18-82-05-00-68 \\
 		--deploy=usb:/dev/sdb --deploy=iso
-	
-	
-EOF
 }
+
 
 ###################################################################################
 # string[] get_field_content <xml_file> <field>
