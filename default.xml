@@ -18,7 +18,7 @@
   <project name="uefi" revision="refs/tags/v1.0.0" />
  
   <!-- sailing -->
-  <project name="sailing" revision="refs/tags/v1.0.4" />
+  <project name="sailing" revision="refs/tags/v1.0.6" />
   
   <!-- kernel -->
   <project name="kernel" revision="refs/heads/cust-lts4.7.1-d05-3.0b"/>
