@@ -21,6 +21,6 @@
   <project name="sailing" revision="refs/tags/v1.0.4" />
   
   <!-- kernel -->
-  <project name="kernel" revision="refs/tags/v3.0-rc0"/>
+  <project name="kernel" revision="refs/heads/cust-lts4.7.1-d05-3.0b"/>
 
 </manifest>
