@@ -64,6 +64,7 @@ Example:
 	./sailing/build.sh --builddir=./workspace \\
 		--deploy=pxe --mac=01-00-18-82-05-00-7f,01-00-18-82-05-00-68 \\
 		--deploy=usb:/dev/sdb --deploy=iso
+EOF
 }
 
 
