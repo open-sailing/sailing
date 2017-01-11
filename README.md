@@ -1,6 +1,7 @@
 Supposedly, you are working on Ubuntu 12.04 or newer version!
 
 Firstly, to download sailing sources with the following commands when there is no repo initialized.
+
 $ mkdir -p ~/bin
 $ sudo apt-get update; sudo apt-get upgrade -y; sudo apt-get install -y wget git
 $ wget -c http://download.open-estuary.org/AllDownloads/DownloadsEstuary/utils/repo -O ~/bin/repo
@@ -25,6 +26,4 @@ $./sailing/build.sh -h
 
 If you just want to quickly try it with binaries, please refer to our binary Download Page to get the latest binaries and documentations for each corresponding boards.
 
-Accessing from China: ftp://117.78.41.188
-
-Accessing from outside-China: http://download.open-estuary.org/
+Sailing project read access : ftp://sailing:123@117.78.41.188
