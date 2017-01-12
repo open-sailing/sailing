@@ -9,6 +9,9 @@
            sync-j="1" />
 
   <!-- tools -->
+  <project name="patches" revision="refs/tags/v1.0" />
+
+  <!-- tools -->
   <project name="tools" revision="refs/tags/v1.0.0" />
  
   <!--apps -->

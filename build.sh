@@ -14,11 +14,14 @@ ARCH=arm64
 PLATFORMS=D05	
 CAPACITY=50GB
 DISTROS=CentOS 
+DEPLOY_TYPE=iso
 OUTPUT_DIR=workspace
+DEPLOY_DEVICE=/dev/sdb
 CROSS_COMPILE=aarch64-linux-gnu-
 ESTUARY_TE_CONFIG=estuary_te_defconfig
 CORE_NUM=`cat /proc/cpuinfo | grep "processor" | wc -l`
 DOWNLOAD_ESTUARY=https://github.com/open-estuary/estuary.git
+COMMIT_SERIAl=5f2a0ed6751ada2772cb53086dcbcc2db4829ee4
 DOWNLOAD_FTP_ADDR=http://open-estuary.org/download/AllDownloads/FolderNotVisibleOnWebsite/EstuaryInternalConfig
 CHINA_INTERAL_FTP_ADDR=ftp://117.78.41.188/FolderNotVisibleOnWebsite/EstuaryInternalConfig
 SAILING_CFGFILE=sailing-config.xml
@@ -42,7 +45,6 @@ export LC_ALL=C
 export PATH=$TOPDIR:$TOPDIR/include:$TOPDIR/submodules:$TOPDIR/deploy:$PATH
 
 
-TOOLCHAIN_DIR= # Toolchain director
 
 ###################################################################################
 # Usage
@@ -167,8 +169,8 @@ install_toolchains()
 	
 	popd >/dev/null
 
-	TOOLCHAIN_DIR=`cd toolchain/$toolchain_dir; pwd`
-	export PATH=$TOOLCHAIN_DIR/bin:$PATH	
+	TOOLCHAIN_PATH=`cd toolchain/$toolchain_dir; pwd`
+	export PATH=$TOOLCHAIN_PATH/bin:$PATH
 
 	#install toolchain
 	if [ ! -d /opt/$toolchain_dir ]; then
@@ -393,21 +395,21 @@ build_kernel()
 quick_deploy()
 {
 	echo "/*---------------------------------------------------------------"
-	echo "- deploy type: $deploy_type, target device: $deploy_device, boards mac: $BOARDS_MAC"
+	echo "- deploy type: $DEPLOY_TYPE, target device: $DEPLOY_DEVICE, boards mac: $BOARDS_MAC"
 	echo "- platform: D05, distros: CentOS, capacity: 50GB"
 	echo "- binary directory: $OUTPUT_DIR/binary/arm64"
 	echo "---------------------------------------------------------------*/"
 	
 	bin_dir=$OUTPUT_DIR/binary/arm64
 	
-	if [ x"$deploy_type" = x"usb" ]; then
-		$estuary_script_path/mkusbinstall.sh --target=$deploy_device --platforms=$PLATFORMS --distros=$DISTROS --capacity=$CAPACITY --bindir=$bin_dir || exit 1
-	elif [ x"$deploy_type" = x"iso" ]; then
+	if [ x"$DEPLOY_TYPE" = x"usb" ]; then
+		$estuary_script_path/mkusbinstall.sh --target=$DEPLOY_DEVICE --platforms=$PLATFORMS --distros=$DISTROS --capacity=$CAPACITY --bindir=$bin_dir || exit 1
+	elif [ x"$DEPLOY_TYPE" = x"iso" ]; then
 	if [ ! -f $bin_dir/Estuary.iso ]; then
 		$estuary_script_path/mkisoimg.sh --platforms=$PLATFORMS --distros=$DISTROS --capacity=$CAPACITY --disklabel="Estuary-TE" --bindir=$bin_dir || exit 1
 		mv Estuary-TE.iso $bin_dir/ || exit 1
 	fi
-	elif [ x"$deploy_type" = x"pxe" ]; then
+	elif [ x"$DEPLOY_TYPE" = x"pxe" ]; then
 		$estuary_script_path/mkpxe.sh --platforms=$PLATFORMS --distros=$DISTROS --capacity=$CAPACITY --boardmac=$BOARDS_MAC --bindir=$bin_dir || exit 1
 	else
 		echo "Unknow deploy type!" >&2 ; exit 1
@@ -431,9 +433,9 @@ do
                 clean) CLEAN=yes ;;
                 -h | --help) Usage ; exit 0 ;;      
                 --builddir) OUTPUT_DIR=$ac_optarg ;;
-                --deploy) DEPLOY=$ac_optarg 
-					deploy_type=`echo "$ac_optarg" | awk -F ':' '{print $1}'`
-					deploy_device=`echo "$ac_optarg" | awk -F ':' '{print $2}'`;;
+                --deploy)
+			DEPLOY_TYPE=`echo "$ac_optarg" | awk -F ':' '{print $1}'`
+			DEPLOY_DEVICE=`echo "$ac_optarg" | awk -F ':' '{print $2}'`;;
                 --mac) BOARDS_MAC=$ac_optarg ;;
                 -a) if [ x"$ac_optarg" = x"China" ]; then DOWNLOAD_FTP_ADDR=$CHINA_INTERAL_FTP_ADDR; fi ;;
                 *) Usage ; echo "Unknown option $1" ; exit 1 ;;
@@ -453,6 +455,20 @@ clone_estuary()
 	fi
 
 	estuary_script_path=$(cd estuary/deploy; pwd)
+
+	pushd $estuary_script_path >/dev/null
+	git checkout $COMMIT_SERIAl
+	cp -f ../../patches/*  ./
+
+	if ! git apply --check *.patch; then
+		echo -e "\033[31mError! Git apply-check patch failed!\033[0m" ; exit 1
+	fi
+
+	if ! git am  *.patch; then
+		echo -e "\033[31mError! Git am patch failed!\033[0m" ; exit 1
+	fi
+	rm *.patch
+	popd >/dev/null
 }
 
 ###################################################################################
