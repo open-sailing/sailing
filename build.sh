@@ -13,10 +13,8 @@
 ARCH=arm64
 PLATFORMS=D05	
 CAPACITY=50GB
-DISTROS=CentOS 
-DEPLOY_TYPE=iso
-OUTPUT_DIR=workspace
-DEPLOY_DEVICE=/dev/sdb
+DISTROS=CentOS
+RELEASE_ISO=Sailing
 CROSS_COMPILE=aarch64-linux-gnu-
 ESTUARY_TE_CONFIG=estuary_te_defconfig
 CORE_NUM=`cat /proc/cpuinfo | grep "processor" | wc -l`
@@ -55,17 +53,18 @@ cat << EOF
 Usage: ./sailing/build.sh [options]
 Options:
 	-h, --help: Display this information
-Options:
-	--builddir: Build output directory, default is workspace
 	-a: download address, China or Estuary(default Estuary)	
-	
+	clean: Clean all binary files
+
+	--builddir: Build output directory, default is workspace
+
 Example:
 	./sailing/build.sh --help
+	./estuary/build.sh clean --builddir=./workspace
 	./sailing/build.sh --builddir=./workspace --deploy=iso -a Estuary
 	./sailing/build.sh --builddir=./workspace --deploy=iso -a China
-	./sailing/build.sh --builddir=./workspace \\
-		--deploy=pxe --mac=01-00-18-82-05-00-7f,01-00-18-82-05-00-68 \\
-		--deploy=usb:/dev/sdb --deploy=iso
+	./sailing/build.sh --builddir=./workspace --deploy=usb:/dev/sdb --deploy=iso
+
 EOF
 }
 
@@ -406,8 +405,8 @@ quick_deploy()
 		$estuary_script_path/mkusbinstall.sh --target=$DEPLOY_DEVICE --platforms=$PLATFORMS --distros=$DISTROS --capacity=$CAPACITY --bindir=$bin_dir || exit 1
 	elif [ x"$DEPLOY_TYPE" = x"iso" ]; then
 	if [ ! -f $bin_dir/Estuary.iso ]; then
-		$estuary_script_path/mkisoimg.sh --platforms=$PLATFORMS --distros=$DISTROS --capacity=$CAPACITY --disklabel="Estuary-TE" --bindir=$bin_dir || exit 1
-		mv Estuary-TE.iso $bin_dir/ || exit 1
+		$estuary_script_path/mkisoimg.sh --platforms=$PLATFORMS --distros=$DISTROS --capacity=$CAPACITY --disklabel=$RELEASE_ISO --bindir=$bin_dir || exit 1
+		mv ${RELEASE_ISO}.iso $bin_dir/ || exit 1
 	fi
 	elif [ x"$DEPLOY_TYPE" = x"pxe" ]; then
 		$estuary_script_path/mkpxe.sh --platforms=$PLATFORMS --distros=$DISTROS --capacity=$CAPACITY --boardmac=$BOARDS_MAC --bindir=$bin_dir || exit 1
@@ -444,6 +443,16 @@ do
         $ac_shift
         shift
 done
+
+
+###################################################################################
+# Default values
+###################################################################################
+
+OUTPUT_DIR=${OUTPUT_DIR:-build}
+DEPLOY_TYPE=${DEPLOY_DEVICE:-iso}
+DEPLOY_DEVICE=${DEPLOY_DEVICE:-/dev/sdb}
+
 ###################################################################################
 # fork estuary script for multiplex
 ###################################################################################
@@ -472,6 +481,27 @@ clone_estuary()
 }
 
 ###################################################################################
+# Clean project
+###################################################################################
+clean_sailing()
+{
+	if [ x"$CLEAN" = x"yes" ]; then
+		echo "##############################################################################"
+		echo "# Clean project builddir: $OUTPUT_DIR"
+		echo "##############################################################################"
+
+		sudo rm -rf $OUTPUT_DIR/kernel
+		rm -f $OUTPUT_DIR/binary/arm64/Image $OUTPUT_DIR/binary/arm64/vmlinux $OUTPUT_DIR/binary/arm64/System.map
+		rm -f $OUTPUT_DIR/binary/arm64/${RELEASE_ISO}.iso 2>/dev/null
+		echo "Clean binary files done!"
+		exit 0
+	fi
+}
+
+if ! clean_sailing; then
+	echo -e "\033[31mError! Clean Sailing failed!\033[0m" ; exit 1
+fi
+###################################################################################
 # Install Sailing Project  Environment
 ###################################################################################
 
@@ -494,6 +524,7 @@ fi
 if ! prior_install_distro; then
 	echo -e "\033[31mError! Install distro failed!\033[0m" ; exit 1
 fi
+
 ###################################################################################
 # Build Kernel Environment
 ###################################################################################
