@@ -1,6 +1,6 @@
 # Documentation
 
-  Welcome to the official documentation for Sailing and the Reference Software Platform . Currently , Kernel base on Estuary 4.7.1 , and the file system using Estuary Release CentOS . These documents and instruction sets are written by the Sailing team .
+  Welcome to the official documentation for Sailing and the Reference Software Platform . Currently , the sailing software platform includes kernel base on Estuary 4.7.1 , and the file system using Estuary Release CentOS . These documents and instruction sets are written by the Sailing team .
 
 ## Contents
 
@@ -41,7 +41,7 @@ the `<version>` , you can select from "Switch branches/tags" , i.e. v0.1 , v0.2 
 ![image](https://github.com/open-sailing/sailing/blob/master/screenshots/version_select.png)
 
 Currently , the latest version is  **refs/tags/v0.2** .
-You can get the latest version from the following link :
+You can get the binaries and documents of the latest version from the following link :
 
     ftp://sailing:123@117.78.41.188/releases/
 ### Step 1.3 Excute Sailing Compile
@@ -86,7 +86,7 @@ If the repo had been initialized , add the following commands before the " repo 
 
 you can update repo version with the following command :
 
-    $ repo init -u "https://github.com/open-estuary/estuary.git" -b -b refs/tags/<new_version> --no-repo-verify --repo-url=git://android.git.linaro.org/tools/repo
+    $ repo init -u "https://github.com/open-sailing/sailing.git" -b refs/tags/<new_version> --no-repo-verify --repo-url=git://android.git.linaro.org/tools/repo
 
     $ false; while [ $? -ne 0 ]; do repo sync; done
 
