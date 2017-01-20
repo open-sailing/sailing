@@ -17,9 +17,6 @@
   <!--apps -->
   <project name="apps" revision="refs/tags/v1.0.0" />
  
-  <!-- uefi -->
-  <project name="uefi" revision="refs/tags/v1.0.0" />
- 
   <!-- sailing -->
   <project name="sailing" revision="refs/tags/v0.2" />
   

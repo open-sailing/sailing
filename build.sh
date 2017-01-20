@@ -222,7 +222,7 @@ install_binaries()
 		echo -e "\033[31mError! Download binaries failed!\033[0m" ; exit 1
 	fi
 
-	download_uefi=(`sed -n "/<uefi>/,/<\/uefi>/p"  ../sailing/$SAILING_CFGFILE 2>/dev/null | sed -e '/^$/d' | sed 's/ //g'`)
+	download_uefi=(`sed -n "/<grub>/,/<\/grub>/p"  ../sailing/$SAILING_CFGFILE 2>/dev/null | sed -e '/^$/d' | sed 's/ //g'`)
 	unset download_uefi[0]
 	unset download_uefi[${#download_uefi[@]}]
 	download_grubefi=${download_uefi[*]}
