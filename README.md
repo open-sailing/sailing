@@ -32,7 +32,8 @@ Firstly , to download sailing sources with the following commands when there is 
 
 ### Step 1.2 Download a Repository
 
-    $ repo init -u "https://github.com/open-sailing/sailing.git" -b refs/tags/<version> --no-repo-verify --repo-url=git://android.git.linaro.org/tools/repo
+    $ repo init -u "https://github.com/open-sailing/sailing.git" -b refs/tags/<version> 
+      --no-repo-verify --repo-url=git://android.git.linaro.org/tools/repo
 
     $ false; while [ $? -ne 0 ]; do repo sync; done
 
@@ -86,7 +87,8 @@ If the repo had been initialized , add the following commands before the " repo 
 
 you can update repo version with the following command :
 
-    $ repo init -u "https://github.com/open-sailing/sailing.git" -b refs/tags/<new_version> --no-repo-verify --repo-url=git://android.git.linaro.org/tools/repo
+    $ repo init -u "https://github.com/open-sailing/sailing.git" -b refs/tags/<new_version> 
+      --no-repo-verify --repo-url=git://android.git.linaro.org/tools/repo
 
     $ false; while [ $? -ne 0 ]; do repo sync; done
 
