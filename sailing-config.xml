@@ -4,7 +4,7 @@ gcc-linaro-aarch64-linux-gnu-4.9-2014.09_linux.tar.xz: toolchain/gcc-linaro-aarc
 </toolchain>
 
 <distro>
-CentOS_ARM64.tar.gz: linux/CentOS/CentOS-7.2.1606-ARM64-V02.tar.gz
+CentOS_ARM64.tar.gz: linux/CentOS/CentOS-7.2.1606-ARM64-V03.tar.gz
 </distro>
 
 <grub>
