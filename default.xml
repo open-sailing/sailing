@@ -4,23 +4,23 @@
   <remote  name="open-sailing"
            fetch="https://github.com/open-sailing/" />
 
-  <default revision="master"
+  <default revision="cust-lts4.7.1-d05-3.0b"
            remote="open-sailing"
            sync-j="1" />
 
   <!-- tools -->
-  <project name="patches" revision="refs/tags/v1.0" />
+  <project name="patches" revision="refs/tags/v0.3" />
 
   <!-- tools -->
-  <project name="tools" revision="refs/tags/v1.0.0" />
+  <project name="tools" revision="refs/tags/v0.3" />
  
   <!--apps -->
-  <project name="apps" revision="refs/tags/v1.0.0" />
+  <project name="apps" revision="refs/tags/v0.3" />
  
   <!-- sailing -->
-  <project name="sailing" revision="refs/tags/v0.2" />
+  <project name="sailing" revision="refs/tags/v0.3" />
   
   <!-- kernel -->
-  <project name="kernel" revision="refs/heads/cust-lts4.7.1-d05-3.0b"/>
+  <project name="kernel" revision="refs/tags/v0.3"/>
 
 </manifest>
