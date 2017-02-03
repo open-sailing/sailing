@@ -52,7 +52,7 @@ Secondly , you can build the whole project with the default config file as follo
     $ sudo ./sailing/build.sh
 The generated file stored in the default path </workspace/binary/arm64> , include the following files :
 
-    Estuary-TE.iso CentOS_ARM4.tar.gz Image deploy-utils.tar.bz2 grub.cfg grubaa64.efi mini-rootfs.cpio.gz
+    Sailing.iso CentOS_ARM4.tar.gz Image deploy-utils.tar.bz2 grub.cfg grubaa64.efi mini-rootfs.cpio.gz
 To try more different deploy style based on Sailing, please get help information about build.sh as follow :
 
     $ ./sailing/build.sh -h
