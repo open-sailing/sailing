@@ -11,6 +11,13 @@ CentOS_ARM64.tar.gz: linux/CentOS/CentOS-7.2.1606-ARM64-V03.tar.gz
 ftp://117.78.41.188/releases/2.3/linux/Common/grubaa64.efi
 </grub>
 
+<doc>
+ftp://sailing:123@117.78.41.188/releases/v0.3/bios-crypt-image-B015SPC001-ec.hpm
+ftp://sailing:123@117.78.41.188/releases/v0.3/D05_User_Manual_for_Estuary_os.docx
+ftp://sailing:123@117.78.41.188/releases/v0.3/HUAWEI%20Rack%20Server%20Upgrade%20Guide%20(iBMC)%2002.doc
+ftp://sailing:123@117.78.41.188/releases/v0.3/Taishan%202280%20Server%20Quick%20Start%20Guide%20(V100R001_01).doc
+</doc>
+
 <prebuild>
 mini-rootfs.cpio.gz: linux/Mini/Mini-1.1-ARM64-V02.cpio.gz
 deploy-utils.tar.bz2: utils/deploy-utils-v04.tar.bz2

@@ -17,11 +17,13 @@ DISTROS=CentOS
 RELEASE_ISO=Sailing
 CROSS_COMPILE=aarch64-linux-gnu-
 ESTUARY_TE_CONFIG=estuary_te_defconfig
+CHECKSUM_FILE=checksum.sum
 CORE_NUM=`cat /proc/cpuinfo | grep "processor" | wc -l`
 DOWNLOAD_ESTUARY=https://github.com/open-estuary/estuary.git
 COMMIT_SERIAl=5f2a0ed6751ada2772cb53086dcbcc2db4829ee4
 DOWNLOAD_FTP_ADDR=http://open-estuary.org/download/AllDownloads/FolderNotVisibleOnWebsite/EstuaryInternalConfig
 CHINA_INTERAL_FTP_ADDR=ftp://117.78.41.188/FolderNotVisibleOnWebsite/EstuaryInternalConfig
+START_SERVICE_PATH=etc/systemd/system/multi-user.target.wants
 SAILING_CFGFILE=sailing-config.xml
 
 ###################################################################################
@@ -248,7 +250,41 @@ install_binaries()
 	cp -f prebuild/grub.cfg $OUTPUT_DIR/binary/arm64 || return 1
 
 }
+###################################################################################
+# Install docs/uefi
+###################################################################################
+install_docs()
+{
+	mkdir -p $OUTPUT_DIR/binary/doc
+	echo "##############################################################################"
+	echo "# Download docs & uefi"
+	echo "##############################################################################"
 
+	docs=(`get_field_content sailing/$SAILING_CFGFILE doc`)
+	pushd $OUTPUT_DIR/binary/doc >/dev/null
+	for doc in ${docs[*]}; do
+		if [ ! -f checksum.sum ] ; then
+			ftp_sailing=${doc%/*}
+			rm -f checksum.sum 2>/dev/null
+			wget -c $ftp_sailing/checksum.sum || return 1
+		fi
+		doc_file=${doc##*/}
+		if [ ! -f $doc_file ] ; then
+			rm -f $doc_file 2>/dev/null
+			wget -c "$doc" || return 1
+		fi
+	done
+	if  grep Sailing $CHECKSUM_FILE >/dev/null 2>&1;then
+			sed -i /Sailing/d  $CHECKSUM_FILE
+	fi
+
+	if ! check_sum . $CHECKSUM_FILE; then
+		echo "Error! Checksum docs & uefi failed!" >&2 ; return 1
+	fi
+	uefi=`grep bios $CHECKSUM_FILE | awk '{print $2}'`
+	cp -a $uefi ../arm64/
+	popd >/dev/null
+}
 ###################################################################################
 # Priority install distros (default distros: CentOS)
 ###################################################################################
@@ -309,6 +345,10 @@ create_distros()
 	echo "---------------------------------------------------------------"
 	if [ -f $OUTPUT_DIR/distro/${DISTROS}_ARM64.tar.gz ]; then
 		return 0
+	fi
+
+	if [ -h $OUTPUT_DIR/distro/$DISTROS/$START_SERVICE_PATH/auditd.service ]; then
+		rm -f $OUTPUT_DIR/distro/$DISTROS/$START_SERVICE_PATH/auditd.service
 	fi
 
 	if [ ! -d $OUTPUT_DIR/distro/$DISTROS ]; then
@@ -519,6 +559,10 @@ fi
 
 if ! install_binaries; then
 	echo -e "\033[31mError! Install binaries failed!\033[0m" ; exit 1
+fi
+
+if ! install_docs; then
+	echo -e "\033[31mError! Download docs & uefi failed!\033[0m" ; exit 1
 fi
 
 if ! prior_install_distro; then
