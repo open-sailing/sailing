@@ -32,7 +32,7 @@ Firstly , to download sailing sources with the following commands when there is 
 
 ### Step 1.2 Download a Repository
 
-    $ repo init -u "https://github.com/open-sailing/sailing.git" -b refs/tags/<version> 
+    $ repo init -u "https://github.com/open-sailing/sailing.git" -b refs/tags/<version>    \ 
       --no-repo-verify --repo-url=git://android.git.linaro.org/tools/repo
 
     $ false; while [ $? -ne 0 ]; do repo sync; done
@@ -41,7 +41,7 @@ the `<version>` , you can select from "Switch branches/tags" , i.e. v0.1 , v0.2 
 
 ![image](https://github.com/open-sailing/sailing/blob/master/screenshots/version_select.png)
 
-Currently , the latest version is  **refs/tags/v0.2** .
+Currently , you can selsect the first line of the tags list , that represent the latest version .
 You can get the binaries and documents of the latest version from the following link :
 
     ftp://sailing:123@117.78.41.188/releases/
@@ -87,7 +87,7 @@ If the repo had been initialized , add the following commands before the " repo 
 
 you can update repo version with the following command :
 
-    $ repo init -u "https://github.com/open-sailing/sailing.git" -b refs/tags/<new_version> 
+    $ repo init -u "https://github.com/open-sailing/sailing.git" -b refs/tags/<new_version>    \
       --no-repo-verify --repo-url=git://android.git.linaro.org/tools/repo
 
     $ false; while [ $? -ne 0 ]; do repo sync; done
