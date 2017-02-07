@@ -24,6 +24,7 @@ COMMIT_SERIAl=5f2a0ed6751ada2772cb53086dcbcc2db4829ee4
 DOWNLOAD_FTP_ADDR=http://open-estuary.org/download/AllDownloads/FolderNotVisibleOnWebsite/EstuaryInternalConfig
 CHINA_INTERAL_FTP_ADDR=ftp://117.78.41.188/FolderNotVisibleOnWebsite/EstuaryInternalConfig
 START_SERVICE_PATH=etc/systemd/system/multi-user.target.wants
+START_BASIS_SERVICE_PATH=etc/systemd/system/basic.target.wants
 SAILING_CFGFILE=sailing-config.xml
 
 ###################################################################################
@@ -349,6 +350,14 @@ create_distros()
 
 	if [ -h $OUTPUT_DIR/distro/$DISTROS/$START_SERVICE_PATH/auditd.service ]; then
 		rm -f $OUTPUT_DIR/distro/$DISTROS/$START_SERVICE_PATH/auditd.service
+	fi
+
+	if [ -h $OUTPUT_DIR/distro/$DISTROS/$START_SERVICE_PATH/irqbalance.service ]; then
+		rm -f $OUTPUT_DIR/distro/$DISTROS/$START_SERVICE_PATH/irqbalance.service
+	fi
+
+	if [ -h $OUTPUT_DIR/distro/$DISTROS/$START_BASIS_SERVICE_PATH/firewalld.service ]; then
+		rm -f $OUTPUT_DIR/distro/$DISTROS/$START_BASIS_SERVICE_PATH/firewalld.service
 	fi
 
 	if [ ! -d $OUTPUT_DIR/distro/$DISTROS ]; then
