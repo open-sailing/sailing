@@ -6,9 +6,9 @@
 	- Add clean option
 	- Support release doc download
 	- Modify default variable parameters
-5.CentOS bug fixed:
-        - update mozjs17-17.0.0-12.el7.centos.0.1.linaro1.aarch64.rpm
-        - fix bug (ID: 0000630), which is "CentOS show /usr/lib64/sa/sadc: error while loading shared libraries"
+5. CentOS bug fixed:
+	- update mozjs17-17.0.0-12.el7.centos.0.1.linaro1.aarch64.rpm
+	- fix bug (ID: 0000630), which is "CentOS show /usr/lib64/sa/sadc: error while loading shared libraries"
 
 # Remained issues:
 1. The aarch64 platform not supported
