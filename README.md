@@ -96,7 +96,7 @@ This step is similar to **Step 1.2** , just the `<new_version>` is the latest ve
 
 ## Sailing Release Version Deploy
 
-If you just want to quickly try it with binaries , please refer to our binary **Download Page** to get the latest binaries and documentations for each corresponding version .
+If you just want to quickly try it with binaries , please refer to our binary **Download Page** to get the latest binaries and documentations for each corresponding version . In order to obtain a better user experience , it is recommended to use the Google browser .
 
 Sailing project read access :
 
