@@ -12,7 +12,7 @@
 
 ARCH=arm64
 PLATFORMS=D05	
-CAPACITY=50GB
+CAPACITY=50
 DISTROS=CentOS
 RELEASE_ISO=Sailing
 CROSS_COMPILE=aarch64-linux-gnu-
@@ -67,7 +67,7 @@ Example:
 	./sailing/build.sh --builddir=./workspace --deploy=iso -a Estuary
 	./sailing/build.sh --builddir=./workspace --deploy=iso -a China
 	./sailing/build.sh --builddir=./workspace --deploy=usb:/dev/sdb --deploy=iso
-
+	./sailing/build.sh --builddir=./workspace --distro=Ubuntu,CentOS  --capacity=50,50 --deploy=usb:/dev/sdb --deploy=iso
 EOF
 }
 
@@ -102,12 +102,11 @@ check_sum()
 		fi
 		rm -f .$checksum_file 2>/dev/null
 	fi
-
 	if ! md5sum --quiet --check $checksum_dir/$checksum_file >/dev/null 2>&1; then
 		return 1
 	fi
-	cp $checksum_file .$checksum_file
 
+	cp $checksum_file .$checksum_file
 	popd >/dev/null
 	return 0
 	)
@@ -201,45 +200,21 @@ install_binaries()
 	pushd prebuild >/dev/null
 	binaries=(`get_field_content ../sailing/$SAILING_CFGFILE prebuild`)
 	for binary in ${binaries[*]}; do
-		target_file=`expr "X$binary" : 'X\([^:]*\):.*' | sed 's/ //g'`
-		target_addr=`expr "X$binary" : 'X[^:]*:\(.*\)' | sed 's/ //g'`
-		binary_file=`basename $target_addr`
+		binary_file=${binary##*/}
 		if [ ! -f ${binary_file}.sum ]; then
 			rm -f .${binary_file}.sum 2>/dev/null
-			wget -c $DOWNLOAD_FTP_ADDR/${target_addr}.sum || return 1
+			wget -c ${binary}.sum || return 1
 		fi
 
 		if [ ! -f $binary_file ] || ! check_sum . ${binary_file}.sum; then
 			rm -f $binary_file 2>/dev/null
-			wget -c $DOWNLOAD_FTP_ADDR/$target_addr || return 1
+			wget -c $binary || return 1
 			check_sum . ${binary_file}.sum || return 1
-		fi
-
-		if [ x"$target_file" != x"$binary_file" ]; then
-			rm -f $target_file 2>/dev/null
-			ln -s $binary_file $target_file
 		fi
 	done
 
 	if [[ $? != 0 ]]; then
 		echo -e "\033[31mError! Download binaries failed!\033[0m" ; exit 1
-	fi
-
-	download_uefi=(`sed -n "/<grub>/,/<\/grub>/p"  ../sailing/$SAILING_CFGFILE 2>/dev/null | sed -e '/^$/d' | sed 's/ //g'`)
-	unset download_uefi[0]
-	unset download_uefi[${#download_uefi[@]}]
-	download_grubefi=${download_uefi[*]}
-	grubefi=${download_grubefi##*/}
-
-	if [ ! -f ${grubefi}.sum ]; then
-		rm -f .${grubefi}.sum 2>/dev/null
-		wget -c ${download_grubefi}.sum || return 1
-	fi
-
-	if [ ! -f $grubefi ] || ! check_sum . ${grubefi}.sum; then
-		rm -f $grubefi 2>/dev/null
-		wget -c $download_grubefi || return 1
-		check_sum . ${grubefi}.sum || return 1
 	fi
 
 	popd >/dev/null
@@ -252,7 +227,7 @@ install_binaries()
 
 }
 ###################################################################################
-# Install docs/uefi
+# Install docs/grub
 ###################################################################################
 install_docs()
 {
@@ -291,48 +266,53 @@ install_docs()
 ###################################################################################
 prior_install_distro()
 {
-	distro_files=`get_field_content ./sailing/$SAILING_CFGFILE distro`
-	ftp_file=`echo $distro_files | tr ' ' '\n' | grep -Po "(?<=${distro}_ARM64.tar.gz:)(.*)"`
-	distro_link=CentOS_ARM64.tar.gz
-	distro_file=${ftp_file##*/}
-	distro=CentOS
+
+	distros=($(echo $DISTROS | tr ',' ' '))
+	distro_files=(`get_field_content ./sailing/$SAILING_CFGFILE distro`)
 	echo "##############################################################################"
 	echo "# Install distros (default distros: CentOS)"
 	echo "##############################################################################"
 	mkdir -p distro
 	pushd distro >/dev/null
-	if [ ! -f ${distro_file}.sum ]; then
-		wget -c $DOWNLOAD_FTP_ADDR/${ftp_file}.sum || return 1
-	fi
-
-	if [ ! -f $distro_file ] || ! check_sum . ${distro_file}.sum; then
-		rm -f $distro_file 2>/dev/null
-		wget -c $DOWNLOAD_FTP_ADDR/$ftp_file || return 1
-		check_sum . ${distro_file}.sum || return 1
-	fi
-
-	if [ ! -f  $distro_link ] || [ ! -f  ${distro_link}.sum ]; then
-		rm -f $distro_link ${distro_link}.sum 2>/dev/null
-		ln -s $distro_file  $distro_link
-		ln -s ${distro_file}.sum ${distro_link}.sum
-	fi
+	for distro in ${distros[@]}; do
+		distro_file=`echo ${distro_files[*]} | tr ' ' '\n' | grep -Po "${distro}_ARM64.tar.gz"`
+		ftp_distro_file=`echo ${distro_files[*]} | tr ' ' '\n' | grep "${distro}_ARM64.tar.gz"`
+		if [ ! -f ${distro_file}.sum ]; then
+			wget -c ${ftp_distro_file}.sum || return 1
+		fi
+		if [ ! -f $distro_file ] || ! check_sum . ${distro_file}.sum; then
+			rm -f $distro_file 2>/dev/null
+			wget -c $ftp_distro_file || return 1
+			check_sum . ${distro_file}.sum || return 1
+		fi
+	done
 	popd >/dev/null
 
 	echo ""	
 	echo "##############################################################################"
 	echo "# Uncompress distros (distros: $DISTROS)"
 	echo "##############################################################################"
+	version=`cd kernel && git describe --tags $(git rev-list --tags --max-count=1)`
+	for distro in ${distros[@]}; do
 
-	mkdir -p $OUTPUT_DIR/distro/$distro
+		if [ ! -f $OUTPUT_DIR/distro/.${distro}_ARM64.tar.gz.sum ] || [ ! -d $OUTPUT_DIR/distro/$distro ] || \
+			! (diff distro/${distro}_ARM64.tar.gz.sum $OUTPUT_DIR/distro/.${distro}_ARM64.tar.gz.sum >/dev/null 2>&1); then
+			sudo rm -rf $OUTPUT_DIR/distro/$distro
+			rm -f $OUTPUT_DIR/distro/.${distro}_ARM64.tar.gz.sum 2>/dev/null
+			rm -rf $OUTPUT_DIR/distro/${distro}_ARM64.* 2>/dev/null
 
-	if ! sudo tar xvf distro/$distro_link -C $OUTPUT_DIR/distro/$distro >/dev/null 2>&1; then
-		sudo rm -rf $OUTPUT_DIR/distro/$distro
-		return 1
-	fi
-	
-	cp distro/${distro}_ARM64.tar.gz.sum $OUTPUT_DIR/distro/.${distro}_ARM64.tar.gz.sum
-	sudo rm -rf $OUTPUT_DIR/distro/$distro/lib/modules/*
-
+			mkdir -p $OUTPUT_DIR/distro/$distro
+			if ! sudo tar xvf distro/${distro}_ARM64.tar.gz -C $OUTPUT_DIR/distro/$distro >/dev/null 2>&1; then
+				sudo rm -rf $OUTPUT_DIR/distro/$distro
+				return 1
+			else
+				cp distro/${distro}_ARM64.tar.gz.sum $OUTPUT_DIR/distro/.${distro}_ARM64.tar.gz.sum
+				touch -a $OUTPUT_DIR/distro/$distro/etc/version
+				echo $version > $OUTPUT_DIR/distro/$distro/etc/version
+				sudo rm -rf $OUTPUT_DIR/distro/$distro/lib/modules/*
+			fi
+		fi
+	done
 	echo ""
 }
 
@@ -344,54 +324,60 @@ create_distros()
 	echo "---------------------------------------------------------------"
 	echo "- Create distros (distros: $DISTROS, distro dir: $OUTPUT_DIR/distro)"
 	echo "---------------------------------------------------------------"
-	if [ -f $OUTPUT_DIR/distro/${DISTROS}_ARM64.tar.gz ]; then
-		return 0
-	fi
 
-	if [ -h $OUTPUT_DIR/distro/$DISTROS/$START_SERVICE_PATH/auditd.service ]; then
-		rm -f $OUTPUT_DIR/distro/$DISTROS/$START_SERVICE_PATH/auditd.service
-	fi
+	distros=($(echo $DISTROS | tr ',' ' '))
+	distro_dir=$OUTPUT_DIR/distro
+	for distro in ${distros[*]}; do
+		if [ -f $distro_dir/${distro}_ARM64.tar.gz ]; then
+			continue
+		fi
 
-	if [ -h $OUTPUT_DIR/distro/$DISTROS/$START_SERVICE_PATH/irqbalance.service ]; then
-		rm -f $OUTPUT_DIR/distro/$DISTROS/$START_SERVICE_PATH/irqbalance.service
-	fi
+		#below especially deal with CentOS
+		if [ -h $distro_dir/$distro/$START_SERVICE_PATH/auditd.service ]; then
+			rm -f $distro_dir/$distro/$START_SERVICE_PATH/auditd.service
+		fi
 
-	if [ -h $OUTPUT_DIR/distro/$DISTROS/$START_BASIS_SERVICE_PATH/firewalld.service ]; then
-		rm -f $OUTPUT_DIR/distro/$DISTROS/$START_BASIS_SERVICE_PATH/firewalld.service
-	fi
+		if [ -h $distro_dir/$distro/$START_SERVICE_PATH/irqbalance.service ]; then
+			rm -f $distro_dir/$distro/$START_SERVICE_PATH/irqbalance.service
+		fi
 
-	if [ ! -d $OUTPUT_DIR/distro/$DISTROS ]; then
-		echo "Error! $OUTPUT_DIR/distro/$DISTROS is not exist!" >&2 ; return 1
-	fi
+		if [ -h $distro_dir/$distro/$START_BASIS_SERVICE_PATH/firewalld.service ]; then
+			rm -f $distro_dir/$distro/$START_BASIS_SERVICE_PATH/firewalld.service
+		fi
 
-	pushd $OUTPUT_DIR/distro/$DISTROS  >/dev/null
-	if ! (sudo tar czvf ../${DISTROS}_ARM64.tar.gz *); then
-		echo "Error! Create ${DISTROS}_ARM64.tar.gz failed!" >&2
-		return 1
-	fi
-	popd >/dev/null
+		if [ ! -d $distro_dir/$distro ]; then
+			echo "Error! $distro_dir/$distro is not exist!" >&2 ; return 1
+		fi
+
+		pushd $distro_dir/$distro
+		if ! (sudo tar czvf ../${distro}_ARM64.tar.gz *); then
+			echo "Error! Create ${distro}_ARM64.tar.gz failed!" >&2
+			return 1
+		fi
+		popd >/dev/null
+	done
 	echo "- Create distros done!"
 	echo ""
 }
-
 ###################################################################################
 # Create distros softlink
 ###################################################################################
 create_distros_softlink()
 {
-
+	distros=($(echo $DISTROS | tr ',' ' '))
 	echo "---------------------------------------------------------------"
 	echo "- Create distros softlink (distros: $DISTROS)"
 	echo "---------------------------------------------------------------"
 
 	pushd $OUTPUT_DIR/binary/arm64 >/dev/null
-
-	rm -f ${DISTROS}_ARM64.tar.gz 2>/dev/null
-	ln -s ../../distro/${DISTROS}_ARM64.tar.gz
-
+	for distro in ${distros[*]}; do
+		rm -f ${distro}_ARM64.tar.gz 2>/dev/null
+		ln -s ../../distro/${distro}_ARM64.tar.gz
+	done
 	popd >/dev/null
 	echo "- Create distros softlink done!"
 	echo ""
+
 }
 
 ###################################################################################
@@ -413,22 +399,25 @@ late_install_distro()
 ###################################################################################
 build_kernel()
 {
+	distros=($(echo $DISTROS | tr ',' ' '))
 	mkdir -p $OUTPUT_DIR/kernel
 	kernel_dir=$(cd $OUTPUT_DIR/kernel; pwd)
 	kernel_bin=$kernel_dir/arch/arm64/boot/Image
-	rootfs=$(cd $OUTPUT_DIR/distro/CentOS; pwd)
 
 	cp -f kernel/arch/arm64/configs/$ESTUARY_TE_CONFIG  $kernel_dir/.sailing.config
 	pushd kernel >/dev/null
+	for distro in ${distros[*]}; do
+		rootfs=$(cd ../$OUTPUT_DIR/distro/$distro; pwd)
 
-	make ARCH=$ARCH CROSS_COMPILE=$CROSS_COMPILE O=$kernel_dir KCONFIG_ALLCONFIG=$kernel_dir/.sailing.config alldefconfig
-	make ARCH=$ARCH CROSS_COMPILE=$CROSS_COMPILE O=$kernel_dir -j${CORE_NUM} ${kernel_bin##*/}
-	#Compile kernel module
-	make ARCH=$ARCH CROSS_COMPILE=$CROSS_COMPILE O=$kernel_dir modules -j${CORE_NUM}
-	make ARCH=$ARCH CROSS_COMPILE=$CROSS_COMPILE O=$kernel_dir modules_install INSTALL_MOD_PATH=$rootfs
-	#Compile firmware	
-	mkdir -p  $rootfs/lib/firmware
-	make PATH=$PATH ARCH=$ARCH CROSS_COMPILE=$cross_compile O=$kernel_dir -j${core_num} firmware_install INSTALL_FW_PATH=$rootfs/lib/firmware
+		make ARCH=$ARCH CROSS_COMPILE=$CROSS_COMPILE O=$kernel_dir KCONFIG_ALLCONFIG=$kernel_dir/.sailing.config alldefconfig
+		make ARCH=$ARCH CROSS_COMPILE=$CROSS_COMPILE O=$kernel_dir -j${CORE_NUM} ${kernel_bin##*/}
+		#Compile kernel module
+		make ARCH=$ARCH CROSS_COMPILE=$CROSS_COMPILE O=$kernel_dir modules -j${CORE_NUM}
+		make ARCH=$ARCH CROSS_COMPILE=$CROSS_COMPILE O=$kernel_dir modules_install INSTALL_MOD_PATH=$rootfs
+		#Compile firmware
+		mkdir -p  $rootfs/lib/firmware
+		make PATH=$PATH ARCH=$ARCH CROSS_COMPILE=$cross_compile O=$kernel_dir -j${core_num} firmware_install INSTALL_FW_PATH=$rootfs/lib/firmware
+	done
 	popd >/dev/null
 
 	cp $kernel_bin $OUTPUT_DIR/binary/arm64/
@@ -479,12 +468,14 @@ do
 
         case $ac_option in
                 clean) CLEAN=yes ;;
-                -h | --help) Usage ; exit 0 ;;      
+                -h | --help) Usage ; exit 0 ;;
+		-d | --distro) DISTROS=$ac_optarg ;;
                 --builddir) OUTPUT_DIR=$ac_optarg ;;
                 --deploy)
 			DEPLOY_TYPE=`echo "$ac_optarg" | awk -F ':' '{print $1}'`
 			DEPLOY_DEVICE=`echo "$ac_optarg" | awk -F ':' '{print $2}'`;;
-                --mac) BOARDS_MAC=$ac_optarg ;;
+		--capacity) CAPACITY=$ac_optarg ;;
+		--mac) BOARDS_MAC=$ac_optarg ;;
                 -a) if [ x"$ac_optarg" = x"China" ]; then DOWNLOAD_FTP_ADDR=$CHINA_INTERAL_FTP_ADDR; fi ;;
                 *) Usage ; echo "Unknown option $1" ; exit 1 ;;
         esac
@@ -501,7 +492,7 @@ done
 OUTPUT_DIR=${OUTPUT_DIR:-build}
 DEPLOY_TYPE=${DEPLOY_DEVICE:-iso}
 DEPLOY_DEVICE=${DEPLOY_DEVICE:-/dev/sdb}
-
+CAPACITY=${CAPACITY:-50}
 ###################################################################################
 # fork estuary script for multiplex
 ###################################################################################

@@ -4,7 +4,7 @@
   <remote  name="open-sailing"
            fetch="https://github.com/open-sailing/" />
 
-  <default revision="refs/tags/v0.3"
+  <default revision="refs/tags/v1.0"
            remote="open-sailing"
            sync-j="1" />
 
@@ -21,6 +21,6 @@
   <project name="sailing" />
 
   <!-- kernel -->
-  <project name="kernel" revision="refs/tags/sailing-v0.3"/>
+  <project name="kernel" revision="refs/tags/sailing-v1.0-pre"/>
 
 </manifest>

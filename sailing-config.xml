@@ -4,12 +4,9 @@ gcc-linaro-aarch64-linux-gnu-4.9-2014.09_linux.tar.xz: toolchain/gcc-linaro-aarc
 </toolchain>
 
 <distro>
-CentOS_ARM64.tar.gz: linux/CentOS/CentOS-7.2.1606-ARM64-V03.tar.gz
+ftp://117.78.41.188/pre-releases/3.0/rc1/linux/CentOS/Common/CentOS_ARM64.tar.gz
+ftp://117.78.41.188/pre-releases/3.0/rc1/linux/Ubuntu/Common/Ubuntu_ARM64.tar.gz
 </distro>
-
-<grub>
-ftp://117.78.41.188/releases/2.3/linux/Common/grubaa64.efi
-</grub>
 
 <doc>
 ftp://sailing:123@117.78.41.188/releases/v0.3/bios-crypt-image-B015SPC001-ec.hpm
@@ -19,8 +16,9 @@ ftp://sailing:123@117.78.41.188/releases/v0.3/Taishan%202280%20Server%20Quick%20
 </doc>
 
 <prebuild>
-mini-rootfs.cpio.gz: linux/Mini/Mini-1.1-ARM64-V02.cpio.gz
-deploy-utils.tar.bz2: utils/deploy-utils-v04.tar.bz2
-grub.cfg: examples/grub-007.cfg
+ftp://117.78.41.188/pre-releases/3.0/rc1/linux/Minirootfs/Common/mini-rootfs.cpio.gz
+ftp://117.78.41.188/pre-releases/3.0/rc1/linux/Common/deploy-utils.tar.bz2
+ftp://117.78.41.188/pre-releases/3.0/rc1/linux/Common/grubaa64.efi
+ftp://117.78.41.188/pre-releases/3.0/rc1/linux/Common/D05/grub.cfg
 </prebuild>
 </estuary>
