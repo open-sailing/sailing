@@ -4,21 +4,21 @@ gcc-linaro-aarch64-linux-gnu-4.9-2014.09_linux.tar.xz: toolchain/gcc-linaro-aarc
 </toolchain>
 
 <distro>
-ftp://117.78.41.188/pre-releases/3.0/rc1/linux/CentOS/Common/CentOS_ARM64.tar.gz
-ftp://117.78.41.188/pre-releases/3.0/rc1/linux/Ubuntu/Common/Ubuntu_ARM64.tar.gz
+ftp://117.78.41.188/releases/3.0/linux/CentOS/Common/CentOS_ARM64.tar.gz
+ftp://117.78.41.188/releases/3.0/linux/Ubuntu/Common/Ubuntu_ARM64.tar.gz
 </distro>
 
 <doc>
-ftp://sailing:123@117.78.41.188/releases/v0.3/bios-crypt-image-B015SPC001-ec.hpm
-ftp://sailing:123@117.78.41.188/releases/v0.3/D05_User_Manual_for_Estuary_os.docx
-ftp://sailing:123@117.78.41.188/releases/v0.3/HUAWEI%20Rack%20Server%20Upgrade%20Guide%20(iBMC)%2002.doc
-ftp://sailing:123@117.78.41.188/releases/v0.3/Taishan%202280%20Server%20Quick%20Start%20Guide%20(V100R001_01).doc
+ftp://sailing:123@117.78.41.188/releases/v1.0/bios-crypt-image-B015SPC001-ec.hpm
+ftp://sailing:123@117.78.41.188/releases/v1.0/D05_User_Manual_for_Estuary_os.docx
+ftp://sailing:123@117.78.41.188/releases/v1.0/HUAWEI%20Rack%20Server%20Upgrade%20Guide%20(iBMC)%2002.doc
+ftp://sailing:123@117.78.41.188/releases/v1.0/Taishan%202280%20Server%20Quick%20Start%20Guide%20(V100R001_01).doc
 </doc>
 
 <prebuild>
-ftp://117.78.41.188/pre-releases/3.0/rc1/linux/Minirootfs/Common/mini-rootfs.cpio.gz
-ftp://117.78.41.188/pre-releases/3.0/rc1/linux/Common/deploy-utils.tar.bz2
-ftp://117.78.41.188/pre-releases/3.0/rc1/linux/Common/grubaa64.efi
-ftp://117.78.41.188/pre-releases/3.0/rc1/linux/Common/D05/grub.cfg
+ftp://117.78.41.188/releases/3.0/linux/Minirootfs/Common/mini-rootfs.cpio.gz
+ftp://117.78.41.188/releases/3.0/linux/Common/deploy-utils.tar.bz2
+ftp://117.78.41.188/releases/3.0/linux/Common/grubaa64.efi
+ftp://117.78.41.188/releases/3.0/linux/Common/D05/grub.cfg
 </prebuild>
 </estuary>

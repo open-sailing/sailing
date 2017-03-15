@@ -20,7 +20,7 @@ ESTUARY_TE_CONFIG=estuary_te_defconfig
 CHECKSUM_FILE=checksum.sum
 CORE_NUM=`cat /proc/cpuinfo | grep "processor" | wc -l`
 DOWNLOAD_ESTUARY=https://github.com/open-estuary/estuary.git
-COMMIT_SERIAl=5f2a0ed6751ada2772cb53086dcbcc2db4829ee4
+COMMIT_SERIAl=300efe84165fa8651c6d694fc69debfc8aade6b7
 DOWNLOAD_FTP_ADDR=http://open-estuary.org/download/AllDownloads/FolderNotVisibleOnWebsite/EstuaryInternalConfig
 CHINA_INTERAL_FTP_ADDR=ftp://117.78.41.188/FolderNotVisibleOnWebsite/EstuaryInternalConfig
 START_SERVICE_PATH=etc/systemd/system/multi-user.target.wants
@@ -444,7 +444,6 @@ quick_deploy()
 	elif [ x"$DEPLOY_TYPE" = x"iso" ]; then
 	if [ ! -f $bin_dir/Estuary.iso ]; then
 		$estuary_script_path/mkisoimg.sh --platforms=$PLATFORMS --distros=$DISTROS --capacity=$CAPACITY --disklabel=$RELEASE_ISO --bindir=$bin_dir || exit 1
-		mv ${RELEASE_ISO}.iso $bin_dir/ || exit 1
 	fi
 	elif [ x"$DEPLOY_TYPE" = x"pxe" ]; then
 		$estuary_script_path/mkpxe.sh --platforms=$PLATFORMS --distros=$DISTROS --capacity=$CAPACITY --boardmac=$BOARDS_MAC --bindir=$bin_dir || exit 1
