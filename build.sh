@@ -15,6 +15,7 @@ PLATFORMS=D05
 CAPACITY=50
 DISTROS=CentOS
 RELEASE_ISO=Sailing
+RC_LOCAL_FILE=etc/rc.local
 CROSS_COMPILE=aarch64-linux-gnu-
 ESTUARY_TE_CONFIG=estuary_te_defconfig
 CHECKSUM_FILE=checksum.sum
@@ -27,7 +28,7 @@ START_SERVICE_PATH=etc/systemd/system/multi-user.target.wants
 START_BASIS_SERVICE_PATH=etc/systemd/system/basic.target.wants
 SAILING_CFGFILE=sailing-config.xml
 
-###################################################################################
+##################################################################################
 # Const Variables, PATH
 ###################################################################################
 CURDIR=`pwd`
@@ -332,6 +333,23 @@ create_distros()
 			continue
 		fi
 
+		mkdir -p $distro_dir/$distro/usr/sailing
+		echo "create distro path: `pwd` $distro_dir/$distro/usr/sailing"
+		echo " `ls $distro_dir/$distro/usr`"
+		read -p "press any key to continue" var
+
+		cp -a sailing/post_install.sh $distro_dir/$distro/usr/bin/
+		if [ x"$distro" = x"CentOS" ]; then
+			cp -a patches/*.rpm  $distro_dir/$distro/usr/sailing
+		elif  [ x"$distro" = x"Ubuntu" ]; then
+			cp -a patches/*.deb  $distro_dir/$distro/usr/sailing
+		else
+			echo "Install Distro Openssl Patch Failed!" >&2 ; exit 1
+		fi
+
+		sed -i '$ a /usr/bin/post_install.sh' $distro_dir/$distro/$RC_LOCAL_FILE
+		echo "$distro_dir/$RC_LOCAL_FILE `cat $distro_dir/$distro/$RC_LOCAL_FILE` "
+		read -p "press any key to continue" var
 		#below especially deal with CentOS
 		if [ -h $distro_dir/$distro/$START_SERVICE_PATH/auditd.service ]; then
 			rm -f $distro_dir/$distro/$START_SERVICE_PATH/auditd.service
