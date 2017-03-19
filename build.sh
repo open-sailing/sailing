@@ -334,9 +334,6 @@ create_distros()
 		fi
 
 		mkdir -p $distro_dir/$distro/usr/sailing
-		echo "create distro path: `pwd` $distro_dir/$distro/usr/sailing"
-		echo " `ls $distro_dir/$distro/usr`"
-		read -p "press any key to continue" var
 
 		cp -a sailing/post_install.sh $distro_dir/$distro/usr/bin/
 		if [ x"$distro" = x"CentOS" ]; then
@@ -348,8 +345,6 @@ create_distros()
 		fi
 
 		sed -i '$ a /usr/bin/post_install.sh' $distro_dir/$distro/$RC_LOCAL_FILE
-		echo "$distro_dir/$RC_LOCAL_FILE `cat $distro_dir/$distro/$RC_LOCAL_FILE` "
-		read -p "press any key to continue" var
 		#below especially deal with CentOS
 		if [ -h $distro_dir/$distro/$START_SERVICE_PATH/auditd.service ]; then
 			rm -f $distro_dir/$distro/$START_SERVICE_PATH/auditd.service
