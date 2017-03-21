@@ -7,18 +7,16 @@ INSTALL_PATH=/usr/sailing
 distro=`uname -a | awk '{print $2}'`
 
 if [ x"$distro" = x"centos" ]; then
-        if [ ! -f .openssl-1.0.2d ]; then
-		pushd  $INSTALL_PATH >/dev/null
+	pushd  $INSTALL_PATH >/dev/null
+	if [ ! -f .openssl-1.0.2d ]; then
                 rpm -Uhv *.rpm
                 touch .openssl-1.0.2d
-		popd > /dev/null
         fi
+	popd > /dev/null
 elif  [ x"$distro" = x"ubuntu" ]; then
-        if [ ! -f .openssl-1.0.2g ]; then
-		/bin/bash pushd  $INSTALL_PATH >/dev/null
-                dpkg -i  *.deb
-                touch .openssl-1.0.2g
-		/bin/bash popd >/dev/null
+        if [ ! -f ${INSTALL_PATH}/.openssl-1.0.2g ]; then
+                dpkg -i  ${INSTALL_PATH}/*.deb
+                touch    ${INSTALL_PATH}/.openssl-1.0.2g
         fi
 else
         echo "Unknow Distro type!" >&2 ; exit 1
