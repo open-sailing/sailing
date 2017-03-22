@@ -15,7 +15,8 @@ PLATFORMS=D05
 CAPACITY=50
 DISTROS=CentOS
 RELEASE_ISO=Sailing
-RC_LOCAL_FILE=etc/rc.local
+CentOS_RC="etc/rc.d/rc.local"
+Default_RC="etc/rc.local"
 CROSS_COMPILE=aarch64-linux-gnu-
 ESTUARY_TE_CONFIG=estuary_te_defconfig
 CHECKSUM_FILE=checksum.sum
@@ -344,7 +345,19 @@ create_distros()
 			echo "Install Distro Openssl Patch Failed!" >&2 ; exit 1
 		fi
 
-		sed -i '$ a /usr/bin/post_install.sh' $distro_dir/$distro/$RC_LOCAL_FILE
+		eval rc_local_file=\$${distro}_RC
+		if [ x"$rc_local_file" = x"" ]; then
+			rc_local_file=$Default_RC
+		fi
+
+		if ! grep "/usr/bin/post_install.sh" $distro_dir/$distro/$rc_local_file >/dev/null; then
+			if grep -E "^(exit)" $distro_dir/$distro/$rc_local_file >/dev/null; then
+				sudo sed -i "/^exit/i/usr/bin/post_install.sh" $distro_dir/$distro/$rc_local_file
+			else
+				sudo sed -i '$ a /usr/bin/post_install.sh' $distro_dir/$distro/$rc_local_file
+			fi
+		fi
+
 		#below especially deal with CentOS
 		if [ -h $distro_dir/$distro/$START_SERVICE_PATH/auditd.service ]; then
 			rm -f $distro_dir/$distro/$START_SERVICE_PATH/auditd.service
