@@ -15,6 +15,7 @@ PLATFORMS=D05
 CAPACITY=50
 DISTROS=CentOS
 RELEASE_ISO=Sailing
+WGET_OPTS="-T 120 -c"
 CentOS_RC="etc/rc.d/rc.local"
 Default_RC="etc/rc.local"
 CROSS_COMPILE=aarch64-linux-gnu-
@@ -154,12 +155,12 @@ install_toolchains()
 
 	if [ ! -f ${toolchain}.sum ]; then
 		rm -f .${toolchain}.sum 2>/dev/null
-		wget -c $DOWNLOAD_FTP_ADDR/toolchain/${toolchain}.sum || return 1
+		wget ${WGET_OPTS} $DOWNLOAD_FTP_ADDR/toolchain/${toolchain}.sum || return 1
 	fi
 
 	if [ ! -f $toolchain ] || ! check_sum . ${toolchain}.sum; then
 		rm -f $toolchain 2>/dev/null
-		wget -c $DOWNLOAD_FTP_ADDR/toolchain/${toolchain} || return 1
+		wget ${WGET_OPTS} $DOWNLOAD_FTP_ADDR/toolchain/${toolchain} || return 1
 		check_sum . ${toolchain}.sum || return 1
 	fi
 
@@ -205,12 +206,12 @@ install_binaries()
 		binary_file=${binary##*/}
 		if [ ! -f ${binary_file}.sum ]; then
 			rm -f .${binary_file}.sum 2>/dev/null
-			wget -c ${binary}.sum || return 1
+			wget ${WGET_OPTS} ${binary}.sum || return 1
 		fi
 
 		if [ ! -f $binary_file ] || ! check_sum . ${binary_file}.sum; then
 			rm -f $binary_file 2>/dev/null
-			wget -c $binary || return 1
+			wget ${WGET_OPTS} $binary || return 1
 			check_sum . ${binary_file}.sum || return 1
 		fi
 	done
@@ -244,12 +245,12 @@ install_docs()
 		if [ ! -f checksum.sum ] ; then
 			ftp_sailing=${doc%/*}
 			rm -f checksum.sum 2>/dev/null
-			wget -c $ftp_sailing/checksum.sum || return 1
+			wget ${WGET_OPTS} $ftp_sailing/checksum.sum || return 1
 		fi
 		doc_file=${doc##*/}
 		if [ ! -f $doc_file ] ; then
 			rm -f $doc_file 2>/dev/null
-			wget -c "$doc" || return 1
+			wget ${WGET_OPTS} "$doc" || return 1
 		fi
 	done
 	if  grep Sailing $CHECKSUM_FILE >/dev/null 2>&1;then
@@ -280,11 +281,11 @@ prior_install_distro()
 		distro_file=`echo ${distro_files[*]} | tr ' ' '\n' | grep -Po "${distro}_ARM64.tar.gz"`
 		ftp_distro_file=`echo ${distro_files[*]} | tr ' ' '\n' | grep "${distro}_ARM64.tar.gz"`
 		if [ ! -f ${distro_file}.sum ]; then
-			wget -c ${ftp_distro_file}.sum || return 1
+			wget ${WGET_OPTS} ${ftp_distro_file}.sum || return 1
 		fi
 		if [ ! -f $distro_file ] || ! check_sum . ${distro_file}.sum; then
 			rm -f $distro_file 2>/dev/null
-			wget -c $ftp_distro_file || return 1
+			wget ${WGET_OPTS} $ftp_distro_file || return 1
 			check_sum . ${distro_file}.sum || return 1
 		fi
 	done
