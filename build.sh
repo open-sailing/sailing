@@ -55,6 +55,7 @@ export PATH=$TOPDIR:$TOPDIR/include:$TOPDIR/submodules:$TOPDIR/deploy:$PATH
 ###################################################################################
 Usage()
 {
+
 cat << EOF
 Usage: ./sailing/build.sh [options]
 Options:
@@ -426,31 +427,7 @@ late_install_distro()
 ###################################################################################
 build_kernel()
 {
-	distros=($(echo $DISTROS | tr ',' ' '))
-	mkdir -p $OUTPUT_DIR/kernel
-	kernel_dir=$(cd $OUTPUT_DIR/kernel; pwd)
-	kernel_bin=$kernel_dir/arch/arm64/boot/Image
-
-	cp -f kernel/arch/arm64/configs/$ESTUARY_TE_CONFIG  $kernel_dir/.sailing.config
-	pushd kernel >/dev/null
-	for distro in ${distros[*]}; do
-		rootfs=$(cd ../$OUTPUT_DIR/distro/$distro; pwd)
-
-		make ARCH=$ARCH CROSS_COMPILE=$CROSS_COMPILE O=$kernel_dir KCONFIG_ALLCONFIG=$kernel_dir/.sailing.config alldefconfig
-		make ARCH=$ARCH CROSS_COMPILE=$CROSS_COMPILE O=$kernel_dir -j${CORE_NUM} ${kernel_bin##*/}
-		#Compile kernel module
-		make ARCH=$ARCH CROSS_COMPILE=$CROSS_COMPILE O=$kernel_dir modules -j${CORE_NUM}
-		make ARCH=$ARCH CROSS_COMPILE=$CROSS_COMPILE O=$kernel_dir modules_install INSTALL_MOD_PATH=$rootfs
-		#Compile firmware
-		mkdir -p  $rootfs/lib/firmware
-		make PATH=$PATH ARCH=$ARCH CROSS_COMPILE=$cross_compile O=$kernel_dir -j${core_num} firmware_install INSTALL_FW_PATH=$rootfs/lib/firmware
-	done
-	popd >/dev/null
-
-	cp $kernel_bin $OUTPUT_DIR/binary/arm64/
-	cp $kernel_dir/vmlinux $OUTPUT_DIR/binary/arm64/
-	cp $kernel_dir/System.map $OUTPUT_DIR/binary/arm64/
-
+	./sailing/build-kernel.sh --output=$OUTPUT_DIR --cross=$CROSS_COMPILE --distro=$DISTROS
 }
 
 ###################################################################################
