@@ -10,9 +10,9 @@ ftp://117.78.41.188/releases/3.0/linux/Ubuntu/Common/Ubuntu_ARM64.tar.gz
 
 <doc>
 ftp://sailing:123@117.78.41.188/releases/v1.0/bios-crypt-image-B015SPC001-ec.hpm
-ftp://sailing:123@117.78.41.188/releases/v1.0/D05_User_Manual_for_Estuary_os.docx
-ftp://sailing:123@117.78.41.188/releases/v1.0/HUAWEI%20Rack%20Server%20Upgrade%20Guide%20(iBMC)%2002.doc
-ftp://sailing:123@117.78.41.188/releases/v1.0/Taishan%202280%20Server%20Quick%20Start%20Guide%20(V100R001_01).doc
+ftp://sailing:123@117.78.41.188/releases/v1.0/'D05_User_Manual_for_Estuary_os.pdf'
+ftp://sailing:123@117.78.41.188/releases/v1.0/'HUAWEI Rack Server Upgrade Guide (iBMC) 02.pdf'
+ftp://sailing:123@117.78.41.188/releases/v1.0/'Taishan 2280 Server Quick Start Guide (V100R001_01).pdf'
 </doc>
 
 <prebuild>
