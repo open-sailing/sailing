@@ -3,9 +3,10 @@
 ###################################################################################
 # Default values
 ###################################################################################
+export ARCH=arm64
 OUTPUT_DIR=${OUTPUT_DIR:-build}
 CROSS_COMPILE=${CROSS_COMPILE:-aarch64-linux-gnu-}
-
+CORE_NUM=`cat /proc/cpuinfo | grep "processor" | wc -l`
 ###################################################################################
 # build_kernel_usage
 ###################################################################################
@@ -25,56 +26,58 @@ EOF
 }
 
 ###################################################################################
-# build_kernel <output_dir>
+# build_kernel $kernel_dir $kernel_bin $modules_dir
 ###################################################################################
-
 build_kernel()
 {
+    kernel_dir=$1
+    kernel_bin=$2
+    modules_dir=$3
+    sudo cp -f ./kernel/arch/arm64/configs/estuary_te_defconfig  $kernel_dir/.sailing.config
+    pushd kernel >/dev/null
+    make O=$kernel_dir CROSS_COMPILE=${CROSS_COMPILE} KCONFIG_ALLCONFIG=$kernel_dir/.sailing.config alldefconfig
+    #make ARCH=$ARCH CROSS_COMPILE=$CROSS_COMPILE O=$kernel_dir menuconfig
+    make O=$kernel_dir CROSS_COMPILE=${CROSS_COMPILE} -j${CORE_NUM} ${kernel_bin##*/}
+    #Compile kernel module
+    make O=$kernel_dir CROSS_COMPILE=${CROSS_COMPILE} modules -j${CORE_NUM}
+    make O=$kernel_dir CROSS_COMPILE=${CROSS_COMPILE} modules_install INSTALL_MOD_PATH=$modules_dir
+    #Compile firmware
+    mkdir -p $modules_fir/lib/firmware
+    make O=$kernel_dir CROSS_COMPILE=${CROSS_COMPILE} firmware_install INSTALL_FW_PATH=$modules_dir/lib/firmware
+    popd >/dev/null
+}
 
-	export ARCH=arm64
+###################################################################################
+# build_kernel <output_dir>
+###################################################################################
+build_project()
+{
 	mkdir -p ${OUTPUT_DIR}/kernel
 	mkdir -p ${OUTPUT_DIR}/modules
 	kernel_dir=$(cd ${OUTPUT_DIR}/kernel; pwd)
 	kernel_bin=$kernel_dir/arch/arm64/boot/Image
 	modules_dir=$(cd ${OUTPUT_DIR}/modules; pwd)
+	distros=($(echo $DISTROS | tr ',' ' '))
 
-	core_num=`cat /proc/cpuinfo | grep "processor" | wc -l`
+	if [ ${#DISTROS[@]} -ne 0 ]; then
+            distros=($(echo $DISTROS | tr ',' ' '))
+	    for distro in ${distros[*]}; do
+		rootfs=$(cd $OUTPUT_DIR/distro/$distro; pwd)
+                if ! build_kernel $kernel_dir $kernel_bin $rootfs; then
+		     echo -e "\033[31mError! Build kernel distro failed!\033[0m" ; exit 1
+		fi
+	    done
+	else
+		if ! build_kernel $kernel_dir $kernel_bin $rootfs; then
+			echo -e "\033[31mError! Build kernel distro failed!\033[0m" ; exit 1
+		fi
+	fi
 
-	sudo cp -f ./kernel/arch/arm64/configs/estuary_te_defconfig  $kernel_dir/.sailing.config
-	pushd kernel >/dev/null
-	sudo make O=$kernel_dir CROSS_COMPILE=${CROSS_COMPILE} KCONFIG_ALLCONFIG=$kernel_dir/.sailing.config alldefconfig
-	#make ARCH=$ARCH CROSS_COMPILE=$CROSS_COMPILE O=$kernel_dir menuconfig
-	sudo make O=$kernel_dir CROSS_COMPILE=${CROSS_COMPILE} -j${core_num} ${kernel_bin##*/}
-	#Compile kernel module
-	sudo make O=$kernel_dir CROSS_COMPILE=${CROSS_COMPILE} modules -j${core_num}
-	sudo make O=$kernel_dir CROSS_COMPILE=${CROSS_COMPILE} modules_install INSTALL_MOD_PATH=$modules_dir 
-	#Compile firmware
-	mkdir -p $modules_fir/lib/firmware
-	sudo make O=$kernel_dir CROSS_COMPILE=${CROSS_COMPILE} firmware_install INSTALL_FW_PATH=$modules_dir/lib/firmware
-	popd >/dev/null
-	
 	mkdir -p $OUTPUT_DIR/binary/arm64/ 2>/dev/null
 	cp $kernel_bin $OUTPUT_DIR/binary/arm64/
 	cp $kernel_dir/vmlinux $OUTPUT_DIR/binary/arm64/
 	cp $kernel_dir/System.map $OUTPUT_DIR/binary/arm64/
 
-	if [ x"$DISTROS" != x"" ]; then
-		distro_module 
-	fi
-}
-
-###################################################################################
-# Distro replace modules
-###################################################################################
-distro_module()
-{
-	distros=($(echo $DISTROS | tr ',' ' '))
-	for distro in ${distros[*]}; do
-		rootfs=$(cd $OUTPUT_DIR/distro/$distro; pwd)
-	
-		sudo cp -af $modules_dir/lib/modules  $rootfs/lib
-		sudo cp -af $modules_dir/lib/firmware $rootfs/lib
-	done
 }
 
 ###################################################################################
@@ -117,6 +120,6 @@ if ! clean_kernel; then
         echo -e "\033[31mError! Clean kernel failed!\033[0m" ; exit 1
 fi
 
-if ! build_kernel; then
+if ! build_project; then
         echo -e "\033[31mError! Build kernel failed!\033[0m" ; exit 1
 fi
