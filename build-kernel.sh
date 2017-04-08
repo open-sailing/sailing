@@ -68,7 +68,7 @@ build_project()
 		fi
 	    done
 	else
-		if ! build_kernel $kernel_dir $kernel_bin $rootfs; then
+		if ! build_kernel $kernel_dir $kernel_bin $modules_dir; then
 			echo -e "\033[31mError! Build kernel distro failed!\033[0m" ; exit 1
 		fi
 	fi
