@@ -21,6 +21,6 @@
   <project name="sailing" />
 
   <!-- kernel -->
-  <project name="kernel" revision="refs/tags/sailing-v1.0-pre"/>
+  <project name="kernel" revision="refs/tags/sailing-v1.0"/>
 
 </manifest>
